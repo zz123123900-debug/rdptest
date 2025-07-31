@@ -1,0 +1,40 @@
+name: Powerful GitHub RDP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rdp-setup:
+    runs-on: windows-latest
+
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: 🔐 إعداد المستخدم والباسورد
+      run: |
+        net user runneradmin p@ssw0rd! /add
+        net localgroup administrators runneradmin /add
+
+    - name: ✅ تفعيل RDP وفتح الفايروال
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+
+    - name: 🔽 تحميل Playit Agent
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-windows-x86_64-signed.exe" -OutFile "$env:USERPROFILE\playit.exe"
+        Start-Sleep -Seconds 3
+
+    - name: 🚀 تشغيل Playit
+      env:
+        PLAYIT_AUTH_KEY: ${{ secrets.pl }}
+      run: |
+        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -WindowStyle Hidden
+        echo "تم تشغيل Playit بنجاح."
+
+    - name: ⏳ إبقاء الـ RDP شغال
+      run: |
+        Write-Host "✅ RDP جاهز! افتح Playit وشوف الرابط."
+        Start-Sleep -Seconds 21600  # 6 ساعات
