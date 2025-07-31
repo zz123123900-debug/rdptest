@@ -1,0 +1,40 @@
+name: 🔐 Custom GitHub RDP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rdp-job:
+    runs-on: windows-latest
+
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: 🧑‍💻 إنشاء مستخدم جديد وتعيين باسورد
+      run: |
+        net user adellive MyStrongP@ssw0rd! /add
+        net localgroup administrators adellive /add
+
+    - name: ✅ تفعيل RDP وفتح الفايروال
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+
+    - name: 🔽 تحميل Playit Agent
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-windows-x86_64-signed.exe" -OutFile "$env:USERPROFILE\playit.exe"
+        Start-Sleep -Seconds 3
+
+    - name: 🚀 تشغيل Playit Agent
+      env:
+        PLAYIT_AUTH_KEY: ${{ secrets.PLAYIT_KEY }}
+      run: |
+        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -WindowStyle Hidden
+        echo "✅ Playit شغال، افتح موقعك على Playit وشوف التونيل."
+
+    - name: ⏳ خلي الـ RDP شغال
+      run: |
+        Write-Host "✅ RDP جاهز. الجلسة هتفضل شغالة 6 ساعات."
+        Start-Sleep -Seconds 21600
